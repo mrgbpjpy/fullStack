@@ -1,31 +1,39 @@
-# main.py
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+# In-memory store (for demo only)
+messages = []
+
+class Message(BaseModel):
+    content: str
+
 app = FastAPI()
 
-# Allow frontend access
+# CORS for React/Vite
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React dev server
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Data schema
-class Message(BaseModel):
-    content: str
-
-# In-memory "DB"
-messages = ["Hello from FastAPI!"]
-
-@app.get("/messages")
-def get_messages():
-    return {"messages": messages}
+@app.get("/")
+def root():
+    return {"message": "API running"}
 
 @app.post("/messages")
-def post_message(msg: Message):
+async def post_message(msg: Message):
     messages.append(msg.content)
-    return {"message": "Message received!"}
+    return {"status": "Message received"}
+
+# ✅ THIS IS WHAT YOU'RE MISSING
+@app.get("/messages")
+async def get_messages():
+    return {"messages": messages}
